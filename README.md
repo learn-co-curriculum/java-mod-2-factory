@@ -9,7 +9,7 @@
 
 Use the factory pattern when you want to let client classes decide which
 implementations of an interface they want to use. Here are the highlights of the
-Factor pattern:
+Factory pattern:
 
 - The base class is usually abstract or an interface and cannot be instantiated
   directly
