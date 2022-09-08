@@ -7,363 +7,172 @@
 
 ## Introduction
 
-Use the factory pattern when you want to let client classes decide which
-implementations of an interface they want to use. Here are the highlights of the
-Factory pattern:
+A **factory** (also sometimes called the factory method) is a creational design
+pattern that provides a common interface for creating objects without exposing
+how the object is created to the client. It is one of the most commonly used
+design patterns in Java when it comes to creating various objects.
 
-- The base class is usually abstract or an interface and cannot be instantiated
-  directly
-- Several classes implement the base class' methods, each with their own
-  implementation
-- Factory class controls the instantiation of one of the subclasses, usually
-  based on criteria it receives to determine which base class to instantiate and
-  return
-- "Running" class then uses the Factory class to ask for an object to be
-  created. The runner does not know or care about the  
-  specific concrete subclasses of the base class or interface
+We use the factory pattern when we want to let client classes decide which
+implementations of an interface they want to use. Here are the highlights of the
+factory pattern:
+
+- The base class is usually an abstract class or an interface and cannot be
+  instantiated directly.
+- Several classes implement the parent class' methods, each with their own
+  implementation.
+- The factory class controls the instantiation of one of the child classes,
+  usually based on criteria it receives to determine which child class to
+  instantiate and return.
+- The driver class then uses the factory class to ask for an object to be
+  created. The driver does not know or care about the  
+  specific concrete child classes of the parent class or interface.
 
 Factory methods work well in conjunction with generics, since generics allow the
-clients to specify the types of objects that a generic class should use. E.g.
-the Java method `Map.ofEntries()` that can create Map objects from the
-collections that are passed into it.
+clients to specify the types of objects that a generic class should use.
+
+## Real World Example
+
+Consider the transportation industry. There are plenty of ways to travel and
+get around nowadays! There are cars, buses, planes, trains, and boats just to
+name a few modes of transportation. There are also newer ways to travel - like
+by driving an electric car. Even if we used standard inheritance, the
+implementation of the way we travel may change rather frequently. We might even
+get to a point where implementing a new change is rather difficult in the
+current system. This scenario would greatly benefit from a factory design
+pattern. Let's take this example and see how to implement this pattern!
 
 ## Implementation
 
-For our example, let's start building a camera system that will give us good
-opportunities to implement the following patterns:
+Using the example we described above, we will be implementing the factory
+design pattern. For reference, consider the diagram below:
 
-- Factory: we will use this pattern to support cameras from different
-  manufacturers
-- Facade: we will use this pattern to abstract the details of the complex
-  functionality required for a camera to take a photograph.
-- Adapter: we will use this pattern to retrofit digital cameras into the class
-  structure we designed in the previous step
+![Transportation Factory](https://curriculum-content.s3.amazonaws.com/java-mod-2/factory/Factory-UML.png)
 
-Let's start by creating a base class to model a traditional, film-based SLR
-camera. We'll make this an abstract class because we need a specific
-implementation of its function for each camera manufacturer. We're not making it
-an interface, however, because at this point we have determined that all cameras
-take the same basic steps in order to take a photograph, even if the exact
-implementation of those steps is manufacturer-specific. Later, we will see how
-that decision becomes problematic once we consider a new type of camera that
-does not require some of the steps that traditional cameras do. We are
-intentionally going through this process of making a decision now that will lead
-to limitations in the future because that's exactly how things happen on real
-projects and with real systems - no one can predict the future.
+## Step 1: Create the Interface
+
+We will first declare the `Vehicle` interface that will be common to all modes
+of transportation. To keep the example simple, let's assume the interface only
+has one method that its subclasses will need to implement:
 
 ```java
-public abstract class Camera {
+package com.flatiron.transportation;
+
+public interface Vehicle {
+    void travel();
 }
 ```
+## Step 2: Create the Implementing Classes
 
-A quick primer on how SLR cameras work might help understand this example. An
-SLR camera is a camera where the light that enter the lens goes is redirected to
-the camera's viewfinder by a mirror, providing the photographer with a "live
-view" of the scene they are trying to photograph. When the photographer is ready
-to take a picture, they push the shutter button. This flips the mirror out of
-the way of the incoming light and directs it towards the film in the camera. The
-shutter then opens to let the light through and the light hits the film and
-exposes it to make the impression of the scene coming through the lens.
-
-Describing this (simplified) process in a series of steps looks like this:
-
-1. Engage the film mechanism to prepare to roll the film for the next exposure
-2. Roll the film for the exposure to come
-3. Release the film mechanism
-4. Open (flip up) the mirror to redirect the light towards the film (instead of
-   the viewfinder)
-5. Open the shutter (set shutter speed, initialize shutter, activate shutter,
-   release shutter)
-6. Close (flip down) the mirror to direct the incoming light from the lens back
-   to the viewfinder again
-
-Since every manufacturer makes their own hardware, we want to have different
-implementations of the functionality to manage a) the film, b) the mirror and c)
-the shutter. So we create 3 interfaces:
-
-1. `FilmOperations`
-2. `ShutterOperations`
-3. `MirrorOperations`
-
-Putting this together in the `Camera` class gives us the following:
+Even though there do exist other transportation vehicles aside from a car, a
+boat, and a plane, to keep the example simple, we will stick to implementing
+just these three. We will also only have the class contain the `travel()`
+method for now too:
 
 ```java
-package com.flatiron.patterns;
+package com.flatiron.transportation;
 
-public abstract class Camera {
-    private FilmOperations filmOps;
-    private ShutterOperations shutterOps;
-    private MirrorOperations mirrorOps;
+public class Car implements Vehicle {
 
-    public Camera(FilmOperations filmOps, ShutterOperations shutterOps, MirrorOperations mirrorOps) {
-        this.filmOps = filmOps;
-        this.shutterOps = shutterOps;
-        this.mirrorOps = mirrorOps;
-    }
-
-    public void takePhotograph(double shutterSpeed) {
-        Logger.getInstance().log(getName() + " is taking a photograph");
-
-        filmOps.engageFilmMechanism();
-        filmOps.rollFilm();
-        filmOps.releaseFilmMechanism();
-
-        mirrorOps.openMirror();;
-
-        shutterOps.setShutterSpeedSetting(shutterSpeed);
-        shutterOps.initializeShutter();
-        shutterOps.activateShutter();
-        shutterOps.releaseShutter();
-
-        mirrorOps.closeMirror();
-
-        Logger.getInstance().log(getName() + " is done taking this photograph");
-    }
-
-    public abstract String getName() ;
-}
-```
-
-Our new interfaces look like this:
-
-```java
-public interface FilmOperations {
-    public void engageFilmMechanism();
-    public void rollFilm();
-    public void releaseFilmMechanism();
-    public String getName();
-}
-```
-
-```java
-public interface ShutterOperations {
-    public void setShutterSpeedSetting(double shutterSpeed);
-    public void initializeShutter();
-    public void activateShutter();
-    public void releaseShutter();
-    public String getName();
-}
-```
-
-```java
-public interface MirrorOperations {
-
-    public void openMirror();
-    public void closeMirror();
-    public String getName();
-}
-```
-
-Now we need the manufacturer-specific implementations of a) the abstract
-`Camera` base class and b) the operations interfaces:
-
-```java
-public class CanonCamera extends Camera {
-    public CanonCamera(FilmOperations filmOps, ShutterOperations shutterOps, MirrorOperations mirrorOps) {
-        super(filmOps, shutterOps, mirrorOps);
-    }
-
-
-    public String getName() {
-        return "Canon";
+    @Override
+    public void travel() {
+        System.out.println("Traveling by car!");
     }
 }
 ```
 
 ```java
-public class NikonCamera extends Camera {
-    public NikonCamera(FilmOperations filmOps, ShutterOperations shutterOps, MirrorOperations mirrorOps) {
-        super(filmOps, shutterOps, mirrorOps);
-    }
+package com.flatiron.transportation;
 
+public class Boat implements Vehicle {
 
-    public String getName() {
-        return "Nikon";
-    }
-}
-```
-
-As you can see, each camera implementation is very simple because the steps of
-"taking a picture" are the same and rely on the implementations of the
-operations interfaces, which look like this:
-
-`FilmOperations` implementations:
-
-```java
-public class CanonFilm implements FilmOperations {
-
-    public void engageFilmMechanism() {
-        Logger.getInstance().log(getName() + " has engaged");
-    }
-
-
-    public void rollFilm() {
-        Logger.getInstance().log(getName() + " has rolled");
-    }
-
-
-    public void releaseFilmMechanism() {
-        Logger.getInstance().log(getName() + " has been released");
-    }
-
-
-    public String getName() {
-        return "Canon Film";
+    @Override
+    public void travel() {
+        System.out.println("Traveling by boat!");
     }
 }
 ```
 
 ```java
-public class NikonFilm implements FilmOperations {
+package com.flatiron.transportation;
 
-    public void engageFilmMechanism() {
-        Logger.getInstance().log(getName() + " has engaged");
-    }
+public class Plane implements Vehicle {
 
-
-    public void rollFilm() {
-        Logger.getInstance().log(getName() + " has rolled");
-    }
-
-
-    public void releaseFilmMechanism() {
-        Logger.getInstance().log(getName() + " has been released");
-    }
-
-
-    public String getName() {
-        return "Nikon Film";
+    @Override
+    public void travel() {
+        System.out.println("Traveling by plane!");
     }
 }
 ```
 
-`ShutterOperations` implementations:
+So far, all we have done is created an interface that has three subclasses -
+nothing we haven't seen or done so far. Now it's time to create the factory
+class.
+
+## Step 3: Create the Factory Class
+
+When defining our factory class, it should be noted that the factory will just
+instantiate and return an object of one of our concrete classes (`Car`, `Boat`, 
+or `Plane`) based on the given information. Therefore, it really only has one
+method. This method will usually be `static` as well since it should not need
+an instance of the factory class to be called.
 
 ```java
-public class CanonShutter implements ShutterOperations {
+package com.flatiron.transportation;
 
-    public void setShutterSpeedSetting(double shutterSpeed) {
-        Logger.getInstance().log(getName() + " has set its speed to " + shutterSpeed + " seconds");
+public class TransportationFactory {
+
+  public enum TransportationMode {
+    CAR,
+    BOAT,
+    PLANE
+  }
+
+  public static Vehicle getVehicle(String vehicle) {
+    TransportationMode transportationMode = TransportationMode.valueOf(vehicle.toUpperCase());
+
+    switch (transportationMode) {
+      case CAR:
+        return new Car();
+      case BOAT:
+        return new Boat();
+      case PLANE:
+        return new Plane();
+      default:
+        return null;
     }
-
-
-    public void initializeShutter() {
-        Logger.getInstance().log(getName() + " has been initialized");
-    }
-
-
-    public void activateShutter() {
-        Logger.getInstance().log(getName() + " has been activated");
-    }
-
-
-    public void releaseShutter() {
-        Logger.getInstance().log(getName() + " has been released");
-    }
-
-
-    public String getName() {
-        return "Canon Shutter";
-    }
+  }
 }
 ```
+
+## Step 4: Use the Factory
+
+It's time to test out our factory design pattern! To test it out, let's first
+go ahead and create our driver class to call the `TransportationFactory` we
+created above:
 
 ```java
-public class NikonShutter implements ShutterOperations {
+package com.flatiron.transportation;
 
-    public void setShutterSpeedSetting(double shutterSpeed) {
-        Logger.getInstance().log(getName() + " has set its speed to " + shutterSpeed + " seconds");
-    }
+public class TransportationDriver {
 
+    public static void main(String[] args) {
+        Vehicle car = TransportationFactory.getVehicle("CAR");
+        Vehicle boat = TransportationFactory.getVehicle("BOAT");
+        Vehicle plane = TransportationFactory.getVehicle("PLANE");
 
-    public void initializeShutter() {
-        Logger.getInstance().log(getName() + " has been initialized");
-    }
-
-
-    public void activateShutter() {
-        Logger.getInstance().log(getName() + " has been activated");
-    }
-
-
-    public void releaseShutter() {
-        Logger.getInstance().log(getName() + " has been released");
-    }
-
-
-    public String getName() {
-        return "Nikon Shutter";
+        car.travel();
+        boat.travel();
+        plane.travel();
     }
 }
 ```
 
-`MirrorOperations` implementations:
+If we run the above code, we can verify that the factory design pattern we
+implemented works too!
 
-```java
-public class CanonMirror implements MirrorOperations {
-
-    public void openMirror() {
-        Logger.getInstance().log((getName() + " is open"));
-    }
-
-
-    public void closeMirror() {
-        Logger.getInstance().log((getName() + " is closed"));
-    }
-
-
-    public String getName() {
-        return "Canon Mirror";
-    }
-}
+```plaintext
+Traveling by car!
+Traveling by boat!
+Traveling by plane!
 ```
-
-```java
-public class NikonMirror implements MirrorOperations {
-
-    public void openMirror() {
-        Logger.getInstance().log((getName() + " is open"));
-    }
-
-
-    public void closeMirror() {
-        Logger.getInstance().log((getName() + " is closed"));
-    }
-
-
-    public String getName() {
-        return "Nikon Mirror";
-    }
-}
-```
-
-Now that we have our classes well defined, this is where we implement a factory
-so that we have the ability to request cameras of different manufacturers:
-
-```java
-public class CameraFactory {
-    public enum CameraManufacturer {
-        NIKON_FILM("Nikon Film"),
-        CANON_FILM("Canon Film");
-
-        String name;
-
-        private CameraManufacturer(String name) {
-            this.name = name;
-        }
-    }
-
-    public static Camera makeCamera(CameraManufacturer manufacturer) {
-        if (manufacturer == CameraManufacturer.NIKON_FILM) {
-            return new NikonCamera(new NikonFilm(), new NikonShutter(), new NikonMirror());
-        } else if (manufacturer == CameraManufacturer.CANON_FILM) {
-            return new CanonCamera(new CanonFilm(), new CanonShutter(), new CanonMirror());
-        }
-
-        return null; // will never happen because we're using an enum but required to satisfy the compiler
-    }
-}
-```
-
-In our lab, we will create a `Photographer` class and a `PhotoStudio` class to
-use the functionality we just created.
+12345678910111213141516171819202122232425262728293031323334353637383940404143454
