@@ -61,6 +61,7 @@ public interface Vehicle {
     void travel();
 }
 ```
+
 ## Step 2: Create the Implementing Classes
 
 Even though there do exist other transportation vehicles aside from a car, a
