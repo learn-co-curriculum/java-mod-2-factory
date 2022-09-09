@@ -127,7 +127,7 @@ public class TransportationFactory {
     PLANE
   }
 
-  public static Vehicle getVehicle(String vehicle) {
+  public static Vehicle buildVehicle(String vehicle) {
     TransportationMode transportationMode = TransportationMode.valueOf(vehicle.toUpperCase());
 
     switch (transportationMode) {
@@ -156,9 +156,9 @@ package com.flatiron.transportation;
 public class TransportationDriver {
 
     public static void main(String[] args) {
-        Vehicle car = TransportationFactory.getVehicle("CAR");
-        Vehicle boat = TransportationFactory.getVehicle("BOAT");
-        Vehicle plane = TransportationFactory.getVehicle("PLANE");
+        Vehicle car = TransportationFactory.buildVehicle("CAR");
+        Vehicle boat = TransportationFactory.buildVehicle("BOAT");
+        Vehicle plane = TransportationFactory.buildVehicle("PLANE");
 
         car.travel();
         boat.travel();
